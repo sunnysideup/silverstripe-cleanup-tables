@@ -2,6 +2,10 @@
 
 namespace Sunnysideup\CleanupTables;
 
+use SilverStripe\Dev\BuildTask;
+use SilverStripe\Core\Config\Config;
+use SilverStripe\ORM\DB;
+
 class CleanTable extends BuildTask
 {
 
@@ -48,9 +52,9 @@ class CleanTable extends BuildTask
         }
     }
 
-    protected function getCutOffTimestamp()
+    protected function getCutOffTimestamp() : int
     {
-        return time() - (86400 * intval(Config::inst()->get(self::class, 'days_ago')));
+        return time() - intval(86400 * intval(Config::inst()->get(self::class, 'days_ago')));
     }
 
     protected function moveRecords()
@@ -58,8 +62,32 @@ class CleanTable extends BuildTask
         $oldTable = $this->getTable();
         $newTable = $this->getArchiveTable();
         $where = ' WHERE UNIX_TIMESTAMP("'.$oldTable.'"."Created") < '. $this->getCutOffTimestamp();
-        DB::query('INSERT INTO "'.$newTable.'" SELECT * FROM "'.$oldTable.' '.$where);
-        DB::query('DELETE FROM "'.$oldTable.' '.$where);
+        $count = DB::query('SELECT COUNT(*) FROM "'.$oldTable.'" '.$where)->value();
+        DB::alteration_message('Archiving '.$count.' records from '.$oldTable.' to '.$newTable,'created');
+        DB::query('INSERT INTO "'.$newTable.'" SELECT * FROM "'.$oldTable.'" '.$where);
+        DB::query('DELETE FROM "'.$oldTable.'" '.$where);
     }
 
+    protected function tableExists($tableName) : bool
+    {
+        $schema = $this->getSchema();
+        if ($this->cacheTableExists[$tableName] = $schema->hasTable($tableName)) {
+            return true;
+        } else {
+            return false;
+        }
+    }
+
+    protected $_schema = null;
+
+    protected function getSchema()
+    {
+        if ($this->_schema === null) {
+            $this->_schema = DB::get_schema();
+            $this->_schema->schemaUpdate(function () {
+                return true;
+            });
+        }
+        return $this->_schema;
+    }
 }
