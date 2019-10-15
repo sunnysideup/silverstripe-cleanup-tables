@@ -6,12 +6,12 @@
         "Silverstripe-CMS",
         "CMS",
         "Silverstripe",
-        "Model",
-        "Class",
-        "hierarchy",
-        "inheritance",
-        "extends",
-        "classes"
+        "model",
+        "table",
+        "stale",
+        "archive",
+        "speed",
+        "clean up"
     ],
     "license": "BSD-3-Clause",
     "authors": [
@@ -26,7 +26,7 @@
     },
     "autoload": {
         "psr-4": {
-            "Sunnysideup\\MyClassTree\\": "src/"
+            "Sunnysideup\\CleanupTables\\": "src/"
         }
     },
     "extra": {
