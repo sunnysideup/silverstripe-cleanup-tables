@@ -1,7 +1,7 @@
 {
     "name": "sunnysideup/cleanup-tables",
     "type": "silverstripe-vendormodule",
-    "description": "Display a complete class tree - see a full (or filtered) list of all classes.",
+    "description": "Delete stale data.",
     "keywords": [
         "Silverstripe-CMS",
         "CMS",
