@@ -61,7 +61,7 @@ class CleanTable extends BuildTask
     {
         $oldTable = $this->getTable();
         $newTable = $this->getArchiveTable();
-        $where = ' WHERE UNIX_TIMESTAMP("'.$oldTable.'"."Created") < '. $this->getCutOffTimestamp();
+        $where = ' WHERE UNIX_TIMESTAMP("'.$oldTable.'"."LastEdited") < '. $this->getCutOffTimestamp();
         $count = DB::query('SELECT COUNT(*) FROM "'.$oldTable.'" '.$where)->value();
         DB::alteration_message('Archiving '.$count.' records from '.$oldTable.' to '.$newTable,'created');
         DB::query('INSERT INTO "'.$newTable.'" SELECT * FROM "'.$oldTable.'" '.$where);
