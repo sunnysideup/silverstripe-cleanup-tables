@@ -13,6 +13,10 @@ class CleanTable extends BuildTask
 
     private static $days_ago = 30;
 
+    private static $table = '';
+
+    private static $cacheTableExists = [];
+
     private static $tables = [
         'LoginAttempt',
     ];
