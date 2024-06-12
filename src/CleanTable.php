@@ -76,11 +76,7 @@ class CleanTable extends BuildTask
     protected function tableExists($tableName): bool
     {
         $schema = $this->getSchema();
-        if ($this->cacheTableExists[$tableName] = $schema->hasTable($tableName)) {
-            return true;
-        }
-
-        return false;
+        return (bool) ($this->cacheTableExists[$tableName] = $schema->hasTable($tableName));
     }
 
     protected function getSchema()
