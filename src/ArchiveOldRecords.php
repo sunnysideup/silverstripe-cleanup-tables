@@ -6,21 +6,32 @@ use SilverStripe\Core\Config\Config;
 use SilverStripe\Dev\BuildTask;
 use SilverStripe\ORM\DB;
 
-class CleanTable extends BuildTask
+class ArchiveOldRecords extends BuildTask
 {
     protected $_schema;
 
-    private static $post_fix = '_ARCHIVE';
+    private static $segment = 'archive-old-records';
 
-    private static $days_ago = 30;
+    protected $title = 'Archive old records from selected tables';
+    protected $description = '
+        You can set a list of tables and an expiration date.
+        This will create a new table with the same name and the post-fix "_ARCHIVE" and
+        move all records older than the expiration date to that table.';
 
-    private static $table = '';
-
-    private static $cacheTableExists = [];
-
-    private static $tables = [
+    private static array  $tables = [
         'LoginAttempt',
     ];
+    private static string $post_fix = '_ARCHIVE';
+
+    private static int $days_ago = 365;
+
+    private static bool $delete_only = false;
+
+    protected string $table = '';
+
+    private array $cacheTableExists = [];
+
+
 
     public function run($request)
     {
@@ -31,7 +42,7 @@ class CleanTable extends BuildTask
         }
     }
 
-    protected function setTable(string $table): CleanTable
+    protected function setTable(string $table): ArchiveOldRecords
     {
         $this->table = $table;
 
@@ -52,7 +63,8 @@ class CleanTable extends BuildTask
     {
         $oldTable = $this->getTable();
         $newTable = $this->getArchiveTable();
-        if (! $this->tableExists($newTable)) {
+        $deleteOnly = Config::inst()->get(static::class, 'delete_only');
+        if (! $this->tableExists($newTable) && $deleteOnly !== true) {
             DB::query('CREATE TABLE "' . $newTable . '" LIKE "' . $oldTable . '";');
         }
     }
@@ -68,8 +80,11 @@ class CleanTable extends BuildTask
         $newTable = $this->getArchiveTable();
         $where = ' WHERE UNIX_TIMESTAMP("' . $oldTable . '"."LastEdited") < ' . $this->getCutOffTimestamp();
         $count = DB::query('SELECT COUNT(*) FROM "' . $oldTable . '" ' . $where)->value();
+        $deleteOnly = Config::inst()->get(static::class, 'delete_only');
         DB::alteration_message('Archiving ' . $count . ' records from ' . $oldTable . ' to ' . $newTable, 'created');
-        DB::query('INSERT INTO "' . $newTable . '" SELECT * FROM "' . $oldTable . '" ' . $where);
+        if ((bool) $deleteOnly !== true) {
+            DB::query('INSERT INTO "' . $newTable . '" SELECT * FROM "' . $oldTable . '" ' . $where);
+        }
         DB::query('DELETE FROM "' . $oldTable . '" ' . $where);
     }
 
