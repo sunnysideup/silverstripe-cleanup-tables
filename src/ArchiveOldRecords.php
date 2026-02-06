@@ -82,7 +82,7 @@ class ArchiveOldRecords extends BuildTask
         $count = DB::query('SELECT COUNT(*) FROM "' . $oldTable . '" ' . $where)->value();
         $deleteOnly = Config::inst()->get(static::class, 'delete_only');
         DB::alteration_message('Archiving ' . $count . ' records from ' . $oldTable . ' to ' . $newTable, 'created');
-        if ((bool) $deleteOnly !== true) {
+        if (!(bool) $deleteOnly) {
             DB::query('INSERT INTO "' . $newTable . '" SELECT * FROM "' . $oldTable . '" ' . $where);
         }
         DB::query('DELETE FROM "' . $oldTable . '" ' . $where);
