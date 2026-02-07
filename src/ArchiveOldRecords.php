@@ -13,14 +13,16 @@ class ArchiveOldRecords extends BuildTask
     private static $segment = 'archive-old-records';
 
     protected $title = 'Archive old records from selected tables';
+
     protected $description = '
         You can set a list of tables and an expiration date.
         This will create a new table with the same name and the post-fix "_ARCHIVE" and
         move all records older than the expiration date to that table.';
 
-    private static array  $tables = [
+    private static array $tables = [
         'LoginAttempt',
     ];
+
     private static string $post_fix = '_ARCHIVE';
 
     private static int $days_ago = 365;
@@ -30,8 +32,6 @@ class ArchiveOldRecords extends BuildTask
     protected string $table = '';
 
     private array $cacheTableExists = [];
-
-
 
     public function run($request)
     {
@@ -82,7 +82,7 @@ class ArchiveOldRecords extends BuildTask
         $count = DB::query('SELECT COUNT(*) FROM "' . $oldTable . '" ' . $where)->value();
         $deleteOnly = Config::inst()->get(static::class, 'delete_only');
         DB::alteration_message('Archiving ' . $count . ' records from ' . $oldTable . ' to ' . $newTable, 'created');
-        if (!(bool) $deleteOnly) {
+        if (! (bool) $deleteOnly) {
             DB::query('INSERT INTO "' . $newTable . '" SELECT * FROM "' . $oldTable . '" ' . $where);
         }
         DB::query('DELETE FROM "' . $oldTable . '" ' . $where);
