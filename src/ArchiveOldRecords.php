@@ -2,11 +2,12 @@
 
 namespace Sunnysideup\CleanupTables;
 
-use Symfony\Component\Console\Input\InputInterface;
-use SilverStripe\Console\PolyOutput;
 use SilverStripe\Core\Config\Config;
 use SilverStripe\Dev\BuildTask;
 use SilverStripe\ORM\DB;
+use SilverStripe\PolyExecution\PolyOutput;
+use Symfony\Component\Console\Command\Command;
+use Symfony\Component\Console\Input\InputInterface;
 
 class ArchiveOldRecords extends BuildTask
 {
@@ -16,7 +17,7 @@ class ArchiveOldRecords extends BuildTask
 
     protected string $title = 'Archive old records from selected tables';
 
-    protected $description = '
+    protected static string $description = '
         You can set a list of tables and an expiration date.
         This will create a new table with the same name and the post-fix "_ARCHIVE" and
         move all records older than the expiration date to that table.';
@@ -39,11 +40,11 @@ class ArchiveOldRecords extends BuildTask
     {
         foreach (Config::inst()->get(self::class, 'tables') as $table) {
             $this->setTable($table);
-            $this->copyTable();
-            $this->moveRecords();
+            $this->copyTable($output);
+            $this->moveRecords($output);
         }
 
-        return 0;
+        return Command::SUCCESS;
     }
 
     protected function setTable(string $table): ArchiveOldRecords
@@ -63,13 +64,14 @@ class ArchiveOldRecords extends BuildTask
         return $this->getTable() . Config::inst()->get(self::class, 'post_fix');
     }
 
-    protected function copyTable()
+    protected function copyTable(PolyOutput $output)
     {
         $oldTable = $this->getTable();
         $newTable = $this->getArchiveTable();
         $deleteOnly = Config::inst()->get(static::class, 'delete_only');
         if (! $this->tableExists($newTable) && $deleteOnly !== true) {
             DB::query('CREATE TABLE "' . $newTable . '" LIKE "' . $oldTable . '";');
+            $output->writeln('Created archive table: ' . $newTable);
         }
     }
 
@@ -78,14 +80,14 @@ class ArchiveOldRecords extends BuildTask
         return time() - intval(86400 * intval(Config::inst()->get(self::class, 'days_ago')));
     }
 
-    protected function moveRecords()
+    protected function moveRecords(PolyOutput $output)
     {
         $oldTable = $this->getTable();
         $newTable = $this->getArchiveTable();
         $where = ' WHERE UNIX_TIMESTAMP("' . $oldTable . '"."LastEdited") < ' . $this->getCutOffTimestamp();
         $count = DB::query('SELECT COUNT(*) FROM "' . $oldTable . '" ' . $where)->value();
         $deleteOnly = Config::inst()->get(static::class, 'delete_only');
-        DB::alteration_message('Archiving ' . $count . ' records from ' . $oldTable . ' to ' . $newTable, 'created');
+        $output->writeln('Archiving ' . $count . ' records from ' . $oldTable . ' to ' . $newTable);
         if (! (bool) $deleteOnly) {
             DB::query('INSERT INTO "' . $newTable . '" SELECT * FROM "' . $oldTable . '" ' . $where);
         }
