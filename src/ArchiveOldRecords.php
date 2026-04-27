@@ -42,6 +42,7 @@ class ArchiveOldRecords extends BuildTask
             $this->copyTable();
             $this->moveRecords();
         }
+
         return 0;
     }
 
