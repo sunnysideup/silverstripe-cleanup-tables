@@ -2,6 +2,8 @@
 
 namespace Sunnysideup\CleanupTables;
 
+use Symfony\Component\Console\Input\InputInterface;
+use SilverStripe\Console\PolyOutput;
 use SilverStripe\Core\Config\Config;
 use SilverStripe\Dev\BuildTask;
 use SilverStripe\ORM\DB;
@@ -10,9 +12,9 @@ class ArchiveOldRecords extends BuildTask
 {
     protected $_schema;
 
-    private static $segment = 'archive-old-records';
+    protected static string $commandName = 'archive-old-records';
 
-    protected $title = 'Archive old records from selected tables';
+    protected string $title = 'Archive old records from selected tables';
 
     protected $description = '
         You can set a list of tables and an expiration date.
@@ -33,13 +35,14 @@ class ArchiveOldRecords extends BuildTask
 
     private array $cacheTableExists = [];
 
-    public function run($request)
+    protected function execute(InputInterface $input, PolyOutput $output): int
     {
         foreach (Config::inst()->get(self::class, 'tables') as $table) {
             $this->setTable($table);
             $this->copyTable();
             $this->moveRecords();
         }
+        return 0;
     }
 
     protected function setTable(string $table): ArchiveOldRecords
