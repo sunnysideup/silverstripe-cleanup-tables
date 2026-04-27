@@ -85,6 +85,7 @@ class ArchiveOldRecords extends BuildTask
         if (! (bool) $deleteOnly) {
             DB::query('INSERT INTO "' . $newTable . '" SELECT * FROM "' . $oldTable . '" ' . $where);
         }
+
         DB::query('DELETE FROM "' . $oldTable . '" ' . $where);
     }
 
@@ -98,9 +99,7 @@ class ArchiveOldRecords extends BuildTask
     {
         if (null === $this->_schema) {
             $this->_schema = DB::get_schema();
-            $this->_schema->schemaUpdate(function () {
-                return true;
-            });
+            $this->_schema->schemaUpdate(fn() => true);
         }
 
         return $this->_schema;
