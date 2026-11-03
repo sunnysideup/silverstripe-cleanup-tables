@@ -2,6 +2,7 @@
 
 namespace Sunnysideup\CleanupTables;
 
+use SilverStripe\Control\Director;
 use SilverStripe\Core\Config\Config;
 use SilverStripe\Dev\BuildTask;
 use SilverStripe\ORM\DB;
@@ -35,6 +36,12 @@ class ArchiveOldRecords extends BuildTask
 
     public function run($request)
     {
+        if (! Director::is_cli()) {
+            echo 'This task can only be run on the command line.';
+
+            return;
+        }
+
         foreach (Config::inst()->get(self::class, 'tables') as $table) {
             $this->setTable($table);
             $this->copyTable();
@@ -99,7 +106,7 @@ class ArchiveOldRecords extends BuildTask
     {
         if (null === $this->_schema) {
             $this->_schema = DB::get_schema();
-            $this->_schema->schemaUpdate(fn() => true);
+            $this->_schema->schemaUpdate(fn () => true);
         }
 
         return $this->_schema;
